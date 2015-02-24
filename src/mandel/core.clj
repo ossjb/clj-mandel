@@ -26,16 +26,15 @@
   [image-data width x y color]
   (aset-int image-data (unchecked-add-int (unchecked-multiply-int y width) x) color))
 
-(defn draw-part
-  [image-data width from-y to-y]
-  (doseq [y (range from-y (inc to-y))
-          x (range width)]
-    (set-pixel image-data width x y (get-color x y width)))
-  )
+(defn draw-line
+  [image-data width y]
+  (doseq [x (range width)]
+    (set-pixel image-data width x y (get-color x y width))))
+
 (defn draw
   [frame buffered-image width height]
   (let [image-data (-> buffered-image (.getRaster) (.getDataBuffer) (.getData))]
-    (dorun (pmap #(draw-part image-data width % %) (shuffle (range height)))))
+    (dorun (pmap #(draw-line image-data width %) (shuffle (range height)))))
   (.repaint frame))
 
 (defn create-frame
