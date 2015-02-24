@@ -9,30 +9,34 @@
 (defn hue-to-rgb ^long
   [^long hue]
   (let [hue (mod hue 360)
-        x (long (* (- 1.0 (Math/abs ^double (dec (mod (/ hue 60.0) 2.0)))) 0xff))]
+        x (long (unchecked-multiply (unchecked-subtract 1.0 (Math/abs ^double (unchecked-dec (mod (/ hue 60.0) 2.0)))) 0xff))]
     (cond
-      (< hue 60) (+ 0xff0000 (* 0x100 x))
-      (< hue 120) (+ (* 0x10000 x) 0xff00)
-      (< hue 180) (+ 0xff00 x)
-      (< hue 240) (+ (* 0x100 x) 0xff)
-      (< hue 300) (+ (* 0x10000 x) 0xff)
-      (< hue 360) (+ 0xff0000 x))))
+      (< hue 60) (unchecked-add-int 0xff0000 (* 0x100 x))
+      (< hue 120) (unchecked-add-int (* 0x10000 x) 0xff00)
+      (< hue 180) (unchecked-add-int 0xff00 x)
+      (< hue 240) (unchecked-add-int (* 0x100 x) 0xff)
+      (< hue 300) (unchecked-add-int (* 0x10000 x) 0xff)
+      (< hue 360) (unchecked-add-int 0xff0000 x))))
 
 (defn get-color ^long
-  [^long x ^long y ^long width ^long height]
-  (hue-to-rgb (/ (* 360 x) width)))
+  [^long x ^long y ^long width]
+  (hue-to-rgb (unchecked-divide-int (unchecked-multiply-int 360 x) width)))
 
 (defn set-pixel
   [image-data width x y color]
-  (aset-int image-data (+ (* y width) x) color))
+  (aset-int image-data (unchecked-add-int (unchecked-multiply-int y width) x) color))
 
+(defn draw-part
+  [image-data width from-y to-y]
+  (doseq [y (range from-y (inc to-y))
+          x (range width)]
+    (set-pixel image-data width x y (get-color x y width)))
+  )
 (defn draw
-  [buffered-image width height]
-  (binding [*unchecked-math* true]
-    (let [image-data (-> buffered-image (.getRaster) (.getDataBuffer) (.getData))]
-      (doseq [y (range height)
-              x (range width)]
-        (set-pixel image-data width x y (get-color x y width height))))))
+  [frame buffered-image width height]
+  (let [image-data (-> buffered-image (.getRaster) (.getDataBuffer) (.getData))]
+    (dorun (pmap #(draw-part image-data width % %) (shuffle (range height)))))
+  (.repaint frame))
 
 (defn create-frame
   [buffered-image]
@@ -50,8 +54,7 @@
   (let [buffered-image (BufferedImage. width height BufferedImage/TYPE_INT_RGB)
         frame (create-frame buffered-image)]
 
-    (time (draw buffered-image width height))
-    (.repaint frame)))
+    (time (draw frame buffered-image width height))))
 
 (defn -main
   "I don't do a whole lot ... yet."
