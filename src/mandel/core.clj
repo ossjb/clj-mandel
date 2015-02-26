@@ -8,15 +8,17 @@
 
 (defn mandelbrot
   [^double cx ^double cy ^long max-iterations]
-  (loop [x 0
-         y 0
-         iter 0]
-    (let [abs-squared (+ (* x x) (* y y))]
-      (if (or (> abs-squared 8) (= iter max-iterations))
-        (- iter (/ (Math/log (/ (Math/log abs-squared) (Math/log 4))) (Math/log 2)))
-        (recur (+ (- (* x x) (* y y)) cx)
-               (+ (* 2 x y) cy)
-               (unchecked-inc iter))))))
+  (let [log2 (Math/log 2)
+        log4 (Math/log 4)]
+    (loop [x 0
+           y 0
+           iter 0]
+      (let [abs-squared (+ (* x x) (* y y))]
+        (if (or (> abs-squared 8) (= iter max-iterations))
+          (- iter (/ (Math/log (/ (Math/log abs-squared) log4)) log2))
+          (recur (+ (- (* x x) (* y y)) cx)
+                 (+ (* 2 x y) cy)
+                 (unchecked-inc iter)))))))
 
 (defn hue-to-rgb ^long
   [^long hue]
@@ -76,6 +78,6 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (mandel 400 400))
+  (mandel 800 800))
 
 
